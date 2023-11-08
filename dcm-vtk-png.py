@@ -61,7 +61,7 @@ legend3d(dicom_data,output_directory)
 transfer_function = vtk.vtkColorTransferFunction()
 transfer_function.SetColorSpaceToHSV()
 transfer_function.HSVWrapOff()
-if args.palette == "cw":    # cold-warm
+if args.palette == "cw":    # cold-warm, from blue to white to red
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 1, (value_range_max+value_range_min)/2, 1, 1, 1)
     transfer_function.AddRGBSegment((value_range_max+value_range_min)/2, 1, 1, 1, value_range_max, 1, 0, 0)
 elif args.palette == "br":  # blue-red
