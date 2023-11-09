@@ -26,9 +26,9 @@ required.add_argument('-w','--width', required=True, type=int, help="window widt
 optional.add_argument('-p',"--palette",type=str,help="color palette, bw - black-white (default), br - blue-red rainbow, cw - cool-warm",default="bw")
 
 # args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/15/","-o/home/maciejm/PHD/PUBLIKACJA_03/IMG","-c100","-w100"])
-# args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/15/","-oIMG","-c100","-w200"])
+args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/17/","-oIMG","-c0","-w150"])
 # args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/00000003/","-o/home/maciejm/PHD/PUBLIKACJA_03/IMG","-c100","-w500"])
-args = parser.parse_args()
+# args = parser.parse_args()
 
 # creating the output directory
 output_directory = os.path.abspath(args.output)
@@ -61,6 +61,7 @@ legend3d(dicom_data,output_directory)
 transfer_function = vtk.vtkColorTransferFunction()
 transfer_function.SetColorSpaceToHSV()
 transfer_function.HSVWrapOff()
+'''
 if args.palette == "cw":    # cold-warm, from blue to white to red
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 1, (value_range_max+value_range_min)/2, 1, 1, 1)
     transfer_function.AddRGBSegment((value_range_max+value_range_min)/2, 1, 1, 1, value_range_max, 1, 0, 0)
@@ -68,6 +69,12 @@ elif args.palette == "br":  # blue-red
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 1, value_range_max, 1, 0, 0)
 else:   # black-white
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_max, 1, 1, 1)
+'''
+'''
+#bw - nonlinear
+transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_max-((value_range_max-value_range_min)*0.25), 0.5, 0.5, 0.5)
+transfer_function.AddRGBSegment(value_range_max-((value_range_max-value_range_min)*0.25), 0.5, 0.5, 0.5, value_range_max, 1, 1, 1)
+'''
 transfer_function.Build()
 
 # conversion from dicom data values to RGB color
@@ -81,6 +88,13 @@ color_data = coloring.GetOutput()
 # conversion from vtk array to numpy array and numpy array reshaping
 numpy_data = vtk_to_numpy(color_data.GetPointData().GetArray("DICOMImage"))
 numpy_data_reshaped = numpy_data.reshape((dicom_dims[2],dicom_dims[1],dicom_dims[0],3))
+
+###
+pil_data = Image.fromarray(numpy.flip(numpy_data_reshaped[148,:,:,:],axis=0))
+pil_data.save("slice_172.png")
+import sys
+sys.exit()
+###
 
 # scales of nonuniform axes
 scales = [round((x/min(dicom_spacing)),5) for x in dicom_spacing]
@@ -114,6 +128,3 @@ for i in range(numpy_data_reshaped.shape[0]):
         pil_data = pil_data.resize((int(round(pil_data.size[0]*scales[0],0)), int(round(pil_data.size[1]*scales[1],0))), Image.Resampling.LANCZOS)
     pil_data.save(os.path.join(z_directory,"slice_%s.png"%(str(i).zfill(4))))
 print("saved %i images from Z axis"%numpy_data_reshaped.shape[0])
-
-#cv2_data_z = cv2.cvtColor(numpy.flip(numpy_data_reshaped[100,:,:,:],axis=0),cv2.COLOR_BGR2RGB)
-#cv2.imwrite("obraz.png", cv2_data_z)

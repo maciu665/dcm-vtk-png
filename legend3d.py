@@ -46,6 +46,16 @@ def legend3d(dicom_data,output_directory):
     actor.SetMapper(mapper)
     renderer.AddActor(actor)
     camera = renderer.GetActiveCamera()
+    
+    basicPasses = vtk.vtkRenderStepsPass()
+    ssao = vtk.vtkSSAOPass()
+    ssao.SetRadius(50)
+    ssao.SetBias(1)
+    ssao.SetKernelSize(128)
+    ssao.BlurOn()
+    ssao.SetDelegatePass(basicPasses)
+
+    renderer.SetPass(ssao)
 
     # lights
     lightKit = vtk.vtkLightKit()
