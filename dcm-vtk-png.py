@@ -23,10 +23,10 @@ required.add_argument('-i','--input', required=True, type=str, help="input direc
 required.add_argument('-o','--output', required=True, type=str, help="output directory")
 required.add_argument('-c','--center', required=True, type=int, help="window center")
 required.add_argument('-w','--width', required=True, type=int, help="window width")
-optional.add_argument('-p',"--palette",type=str,help="color palette, bw - black-white (default), br - blue-red rainbow, cw - cool-warm",default="bw")
+optional.add_argument('-p',"--palette",type=str,help="color palette, bw - black-white (default), cw - cool-warm, br - blue-red rainbow, bwnl - black-white bilinear, bwba - black-white with below and above colors, bwsel - black-white with range selection, bands - arbitrary bands",default="bw")
 
-# args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/15/","-o/home/maciejm/PHD/PUBLIKACJA_03/IMG","-c100","-w100"])
-args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/17/","-oIMG","-c0","-w150"])
+args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/15/","-o/home/maciejm/PHD/PUBLIKACJA_03/IMG","-c0","-w150","-pbwnl"])
+# args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/17/","-oIMG","-c0","-w150"])
 # args = parser.parse_args(["-i/home/maciejm/PHD/PUBLIKACJA_03/DCM/00000003/","-o/home/maciejm/PHD/PUBLIKACJA_03/IMG","-c100","-w500"])
 # args = parser.parse_args()
 
@@ -42,9 +42,13 @@ value_range_max = args.center + args.width/2
 dicom_reader = vtk.vtkDICOMImageReader()
 dicom_reader.SetDirectoryName(args.input)
 dicom_reader.Update()
+# dicom data in the form of vtkImageData object
 dicom_data = dicom_reader.GetOutput()
+# dicom data resolution
 dicom_dims = dicom_data.GetDimensions()
+# dicom data size (X,Y and Z ranges)
 dicom_bounds = dicom_data.GetBounds()
+# dicom data spacing
 dicom_spacing = list(dicom_data.GetSpacing())
 
 # dicom data information
@@ -61,21 +65,57 @@ legend3d(dicom_data,output_directory)
 transfer_function = vtk.vtkColorTransferFunction()
 transfer_function.SetColorSpaceToHSV()
 transfer_function.HSVWrapOff()
-'''
+
 if args.palette == "cw":    # cold-warm, from blue to white to red
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 1, (value_range_max+value_range_min)/2, 1, 1, 1)
     transfer_function.AddRGBSegment((value_range_max+value_range_min)/2, 1, 1, 1, value_range_max, 1, 0, 0)
-elif args.palette == "br":  # blue-red
+elif args.palette == "br":  # blue-red, rainbow-like transition thanks to HSV color space
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 1, value_range_max, 1, 0, 0)
-else:   # black-white
+elif args.palette == "bwnl":  # black-white, bilinear
+    transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_max-(args.width*0.85), 0.5, 0.5, 0.5)
+    transfer_function.AddRGBSegment(value_range_max-(args.width*0.85), 0.5, 0.5, 0.5, value_range_max, 1, 1, 1)
+elif args.palette == "bwba":  # black-white, with blue and red below and above range
+    transfer_function.AddRGBSegment(value_range_min-1, 0, 0, 1, value_range_min, 0, 0, 1)
+    transfer_function.AddRGBSegment(value_range_max, 1, 0, 0, value_range_max+1, 1, 0, 0)
     transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_max, 1, 1, 1)
-'''
-'''
-#bw - nonlinear
-transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_max-((value_range_max-value_range_min)*0.25), 0.5, 0.5, 0.5)
-transfer_function.AddRGBSegment(value_range_max-((value_range_max-value_range_min)*0.25), 0.5, 0.5, 0.5, value_range_max, 1, 1, 1)
-'''
+elif args.palette == "bwsel":  # black-white, with middle 10% of values colored magenta
+    transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_min+(args.width*0.45), 0.45, 0.45, 0.45)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.55)-0.001, 1, 0, 1, value_range_max, 0.55, 0.55, 0.55)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.45), 0.45, 0.45, 0.45, value_range_min+(args.width*0.45)+0.001, 1, 0, 1)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.55), 0.55, 0.55, 0.55, value_range_max, 1, 1, 1)
+elif args.palette == "bands":  # arbitrary color bands
+    transfer_function.AddRGBSegment(value_range_min, 0, 0.45, 0.45, value_range_min+(args.width*0.2), 0.0, 0.45, 0.45)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.2)+0.001, 1, 0, 1, value_range_min+(args.width*0.4), 1, 0, 1)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.4)+0.001, 1, 1, 0, value_range_min+(args.width*0.6), 1, 1, 0)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.6)+0.001, 0, 0.3, 0, value_range_min+(args.width*0.8), 0, 0.3, 0)
+    transfer_function.AddRGBSegment(value_range_min+(args.width*0.8)+0.001, 1, 0.7, 1, value_range_max, 1, 0.7, 1)
+else:   # bw, black-white
+    transfer_function.AddRGBSegment(value_range_min, 0, 0, 0, value_range_max, 1, 1, 1)
+
 transfer_function.Build()
+kolorki = []
+for i in range(300):
+    val = i/2-75
+    r = int(round(transfer_function.GetRedValue(val)*255,0))
+    g = int(round(transfer_function.GetGreenValue(val)*255,0))
+    b = int(round(transfer_function.GetBlueValue(val)*255,0))
+    kolorki.append([r,g,b])
+
+mapa = []
+for i in range(50):
+    mapa.append(kolorki)
+mapa = numpy.array(mapa,dtype=numpy.uint8)
+pil_data = Image.fromarray(mapa)
+
+legend = Image.new("RGB", (512,60), (255,255,255))
+legend.paste(pil_data, (106, 10))
+draw = ImageDraw.Draw(legend)
+# draw.text((106,60), str(value_range_min), "black",font_size=20,align="right")
+
+legend.save("mapa-%s.png"%args.palette)
+
+import sys
+# sys.exit()
 
 # conversion from dicom data values to RGB color
 coloring = vtk.vtkImageMapToColors()
@@ -91,8 +131,8 @@ numpy_data_reshaped = numpy_data.reshape((dicom_dims[2],dicom_dims[1],dicom_dims
 
 ###
 pil_data = Image.fromarray(numpy.flip(numpy_data_reshaped[148,:,:,:],axis=0))
-pil_data.save("slice_172.png")
-import sys
+pil_data.save("slice_172-%s.png"%args.palette)
+
 sys.exit()
 ###
 
