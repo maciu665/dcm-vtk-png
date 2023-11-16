@@ -93,10 +93,32 @@ else:   # bw, black-white
 transfer_function.Build()
 
 # creating an image with 3d representation of dicom data
-legend3d(dicom_data,output_directory,transfer_function,value_range_min,value_range_max)
+legend3d(dicom_data,output_directory)
+
+
+kolorki = []
+for i in range(300):
+    val = i/2-75
+    r = int(round(transfer_function.GetRedValue(val)*255,0))
+    g = int(round(transfer_function.GetGreenValue(val)*255,0))
+    b = int(round(transfer_function.GetBlueValue(val)*255,0))
+    kolorki.append([r,g,b])
+
+mapa = []
+for i in range(50):
+    mapa.append(kolorki)
+mapa = numpy.array(mapa,dtype=numpy.uint8)
+pil_data = Image.fromarray(mapa)
+
+legend = Image.new("RGB", (512,60), (255,255,255))
+legend.paste(pil_data, (106, 10))
+draw = ImageDraw.Draw(legend)
+# draw.text((106,60), str(value_range_min), "black",font_size=20,align="right")
+
+legend.save("mapa-%s.png"%args.palette)
 
 import sys
-sys.exit()
+# sys.exit()
 
 # conversion from dicom data values to RGB color
 coloring = vtk.vtkImageMapToColors()
