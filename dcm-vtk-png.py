@@ -95,9 +95,6 @@ transfer_function.Build()
 # creating an image with 3d representation of dicom data
 legend3d(dicom_data,output_directory,transfer_function,value_range_min,value_range_max)
 
-import sys
-sys.exit()
-
 # conversion from dicom data values to RGB color
 coloring = vtk.vtkImageMapToColors()
 coloring.SetLookupTable(transfer_function)
@@ -114,7 +111,7 @@ numpy_data_reshaped = numpy_data.reshape((dicom_dims[2],dicom_dims[1],dicom_dims
 pil_data = Image.fromarray(numpy.flip(numpy_data_reshaped[148,:,:,:],axis=0))
 pil_data.save("slice_172-%s.png"%args.palette)
 
-sys.exit()
+# sys.exit()
 ###
 
 # scales of nonuniform axes
