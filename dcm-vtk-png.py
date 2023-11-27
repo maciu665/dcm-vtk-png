@@ -1,4 +1,4 @@
-# importy
+#
 
 """
 A script for converting DICOM format data from CT scans into images. 
@@ -7,7 +7,7 @@ select any color scale and also to obtain additional data in the form of,
 for example, a legend containing three-dimensional visualizations of the converted data.
 
 """
-
+# imports
 import vtk
 import os
 import numpy
