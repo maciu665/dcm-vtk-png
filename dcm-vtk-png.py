@@ -5,7 +5,7 @@ A script for converting DICOM format data from CT scans into images.
 The use of the VTK (Visualization Toolkit) library makes it possible to
 select any color scale and also to obtain additional data in the form of,
 for example, a legend containing three-dimensional visualizations of the converted data.
-
+Authors: Maciej Majchrzak, Aleksandra Łukasiak, Piotr Łukasiak
 """
 # imports
 import vtk
